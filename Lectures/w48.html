@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Data-analyse · Week 48</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="John Ashley Burgoyne" />
+    <script src="w48_files/header-attrs-2.11/header-attrs.js"></script>
+    <link href="w48_files/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="w48_files/remark-css-0.0.1/default-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Data-analyse · Week 48
+## Understanding Statistics with Simulations
+### John Ashley Burgoyne
+### University of Amsterdam
+
+---
+
+
+
+
+# Notes about Reliability
+
+- **Reliability and group size.** Where we expect there to be individual differences, *averages* can still be reliable.
+
+- **Reliability doesn't mean that things don’t change.** It only means that if you measured again *under the same conditions*, you would get the same result (e.g., asking the same person the same question again later in the same survey).
+
+- **Reliability in the statistical sense is not the same as the reliability of a source.** Reports from a politically biased think tank, for example, or pharma-funded drug studies, might have quite consistent results even though we would worry about their validity because of potential bias.
+
+---
+class: center middle
+
+
+### There are an infinite number of correct answers to Exercise 3.2. 
+
+---
+
+# Review: Linear, Exponential, and Power-Law Growth
+
+- Linear model: `\(y_i = a + bx_i + \epsilon_i\)`
+
+- Exponential-growth model: `\(\log y_i = a + bx_i + \epsilon_i\)`
+  - Also known in the literature as a **log-linear model**
+
+- Power-law growth model: `\(\log y_i = a + b \log x_i + \epsilon_i\)`
+
+- We usually assume that the errors `\(\epsilon_i \sim \mathcal{N}(0, \sigma^2)\)`.
+  - We need to estimate the `\(\sigma\)` or `\(\sigma^2\)` parameters, but these are rarely quantities of interest.
+  
+- We call the `\(a\)` and `\(b\)` parameters the **coefficients**.
+
+---
+
+# Three Types of Errors
+
+  **Sampling error** is the error that arises when we have to work with a sample instead of our entire population.
+- In musicology, sometimes we have no sampling error! If your population is Beethoven symphonies or Beatles albums, for example, you can often use the entire population.
+
+**Measurement error** is the error that arises because we can't measure our observations perfectly.
+  - Measuring tuning is a good example: because of vibrato and timbre, it is difficult to meausre the *exact* pitch a musician is singing or playing.
+
+**Model error** is the error that arises because our statistical models (e.g., linear regression) are only useful approximations of how the world really works.
+
+The **central limit theorem** shows that the distribution of the sum of a large number of independent random variables (e.g., errors) becomes closer and closer to a normal distribution as the number of variables increases.
+
+---
+
+# Standard Errors and Confidence Intervals
+
+Because of the errors, the parameter estimates we get from fitting a statistical model also have error. The standard deviation of that error is called the **standard error** of the parameter estimate.
+
+We can use standard errors to generate **confidence intervals** for each parameter. We can choose the percentage of the time we want are confidence intervals to contain the true value of the parameter, but the higher the percentage, the wider the interval.
+
+If the errors are normally or near-normally distributed:
+
+  - Almost all possible parameter values will be within the estimate ± 3 SE.
+
+  - The 99% confidence interval is the estimate ± 2½ SE.
+
+  - The 95% confidence interval is the estimate ± 2 SE.
+
+  - The 68% confidence interval is the estimate ± 1 SE.
+
+  - The 50% confidence interval is the estimate ± ⅔ SE.
+
+---
+
+# Computing Standard Errors
+
+### Population Mean
+
+If you take a sample of *n* observations from a population and compute the mean `\(\mu\)` and the standard deviation `\(\sigma\)` of your sample...
+  - ...then `\(\mu\)` is an estimate of the true population mean with SE `\(\frac{\sigma}{\sqrt{n}}\)`.
+  - If `\(n\)` is small (&lt; 20), then statisticians get more accurate standard errors using the ** *t* distribution** with `\(n - 1\)` **degrees of freedom**.
+
+### Proportions
+
+If you take a sample of *n* observations from a binary (yes–no) process and count the number *y* of yes responses...
+  - ...then `\(\frac{y}{n}\)` is an estimate of the true proportion of yes with SE `\(\sqrt{\frac{\frac{y}{n}(1 - \frac{y}{n})}{n}}\)`.
+  - If the true proportion is reasonably close to 0.5, then it can be simpler to approximate the standard error as `\(\frac{1}{2\sqrt{n}}\)`.
+
+---
+
+# Computing Standard Errors
+
+### Differences Between Parameters
+
+If you have two parameter estimates with standard errors and want to compute the standard error of the *difference* between them, the formula is
+
+`$$\text{standard error of the difference} = \sqrt{\text{se}_1^2 + \text{se}_2^2}$$`
+  - This arises often when comparing corpora or treatment and control groups.
+
+  - *We'll try this later today using R and the Paradiso dataset.*
+
+---
+
+# Bias
+
+We already know that if we choose a non-representative sample, the results may not generalise well to a larger population. Today, we can describe the problem more formally as **unmodelled error**.
+
+The most important problem with generalisation is usually **bias**.
+
+  - Bias means that our parameter estimates will by systematically too high or too low.
+
+  - In linear regression, it is normally a problem with the *data*, not the model.
+    - Although in more advanced statistics, models can also be biased.
+
+  - If you know why you have bias, sometimes you can fix it by taking a weighted average of parameter estimates.
+
+### Discussion Point
+
+*If we tried to estimate the number of concerts UvA students attended before the pandemic, what kind of bias would you expect?*
+
+---
+
+# Null-Hypothesis Significance Testing
+
+Traditional statistics emphasises a **null hypothesis**, typically that some parameter of interest is *exactly* zero.
+  - In the humanities and social sciences, the null hypothesis is usually ridiculous: parameters may be very small, but they are unlikely to be *exactly* zero.
+
+Traditional statistics computes the standard error and confidence interval for the parameter of interest and then check whether the confidence interval includes the null hypothesis (typically zero).
+
+The ** *p* value ** is 1 – the confidence values of the narrowest confidence interval that contains the null hypothesis.
+  - For example, if the narrowest confidence interval that contains the null hypothesis is the 95% confidence interval, then we say that `\(p = .05\)`.
+
+The lower the *p* value, the less likely it would be to observe the data in your sample if the null hypothesis were true...
+  - *...but we never really thought that the null hypothesis was true!*
+
+---
+
+# Epistemological Errors
+
+Traditional statistics focusses on minimising two types of error.
+
+  - A **Type I error** is when you claim that the null hypothesis is false when in fact the null hypothesis is true.
+
+  - A **Type II error** is when you claim that the null hypothesis is true when in face the null hypothesis is false.
+
+  - Traditional statistics focusses on Type I, but David Huron has argued that in the humanities, Type II  closes down potentially interesting research.
+
+The textbook authors argue for a new approach to epistemological error.
+
+  - A **Type S error** is when your parameter estimate has the wrong sign (e.g., watching Netflix *increases* musicians’ practice times instead of decreases).
+
+  - A **Type M error** is when you claim a parameter estimate is larger than it actually is.
+
+- Focussing on Type I errors makes Type S and Type M errors more common due to the **statistical significance filter**.
+
+---
+
+# Problems with *p* Values
+
+Traditional research in the social sciences insists on publishing only findings with *p* values less than some conventional vaue (**statistical significace**).
+  - The most common significance requirement is `\(p &lt; .05\)`.
+
+### But...
+
+- Statistical significance is not the same as **scientific significance**.
+
+- Collecting more data will *always* result in a lower *p* value, even though the underlying population has not changed.
+
+- Non-significant is not the same as no effect.
+
+- High *p* values only mean that there is uncertainty. They don't prove or disprove anything.
+
+- *And the difference between statistically significant and not statistically significant...is not statistically significant!*
+
+---
+
+# So What Should We Do?
+
+&lt;br/&gt;
+
+### Compute and report *p* values, because people expect them, but don't ignore non-significant results.
+
+&lt;br/&gt;
+
+### Try to show as many comparisons as you can and think of as many explanations as you can.
+
+&lt;br/&gt;
+
+### Make your data public whenever possible, so that your colleagues can try other models.
+
+---
+class: inverse center middle
+
+# Intermezzo: Simulation as a Way of Life
+
+---
+
+# Bootstrapping
+
+.pull-left[
+1. Re-draw a sample from your actual data with the same number of data points.
+
+2. Choose a statistic that you are interested in (e.g., the mean of some variable or a quantity of interest from a linear model) and compute it from your new sample.
+
+3. Repeat Steps 1 and 2 a large number of times. 
+
+4. Compute histograms or confidence intervals from these 'bootstrapped' statistics.
+]
+
+.pull-right[&lt;br/&gt; &lt;br/&gt; ![](boots.jpg)]
+
+???
+
+Image source: Pixabay
+
+---
+
+# Model-based simulation
+
+.pull-left[
+1. Using *estimates from an existing model* (e.g., linear regression with normally-distributed errors), simulate the same number of data points as you have in your data.
+
+2. Choose a statistic that you are interested in (e.g., the mean of some variable or a quantity of interest from a linear model) and compute it from your new simulation.
+
+3. Repeat Steps 1 and 2 a large number of times. 
+
+4. Compute histograms or confidence intervals from these simulated statistics.
+]
+
+.pull-right[&lt;br/&gt; &lt;br/&gt; ![](Polya_Urn.png)]
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create();
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
