@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Data-analyse · Week 49</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="John Ashley Burgoyne" />
+    <script src="w49_files/header-attrs-2.11/header-attrs.js"></script>
+    <link href="w49_files/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="w49_files/remark-css-0.0.1/default-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Data-analyse · Week 49
+## Thinking About Regression
+### John Ashley Burgoyne
+### University of Amsterdam
+
+---
+
+
+
+
+
+# Simulation as a Way of Life
+
+- Last week we looked at two different types of simulations.
+
+  - **Bootstrapping** involves creating many new datasets by resampling your original data *with replacement*.
+  
+  - **Model-based** approaches involve drawing random numbers based on how you think the errors in your model should be distribution (e.g., the normal bell curve)
+  
+- Last week, we used bootstrapping for simple statistics like means, but you can do the same thing with *any* data-driven research. 
+
+  - For example, instead of running a linear regression on just your original data set, you can run a linear regression on a large number bootstrapped datasets and see what the range of parameter values is.
+  
+  - We'll see an example later today!
+
+---
+
+# Let’s Do Linear Regression!
+
+- Today and next week, we will round off the course by just doing linear regression.
+
+  - Today we will focus on the basics, when both the dependent variable and the covariates are continuous (traditional linear regression).
+  
+  - Next week, we will look at what we do when the predictor is discrete (a.k.a. **ANOVA**).
+
+&lt;br/&gt;
+  
+- For this course, we will only be using the very simplest model in the book, as we saw in previous weeks:
+`$$y = a + bx + \epsilon$$`
+  - *Do you remember the names of each variable in this formula?*
+
+---
+
+# Set-Up
+
+In order to work with the code models from the book, you need to install the **rstanarm** package. 
+
+Then you need to load it into R every time you start up, using this command.
+
+
+```r
+library(rstanarm)
+```
+
+&lt;br/&gt;
+
+For the examples in this lecture, you will also need to load the **chopsticks** data.
+
+---
+
+# Medians and MAD SD
+
+The `stan_glm()` function we will be using reports its results in terms of median and MAD SD.
+
+- If you sort a set of numbers from smallest to largest, the **median** is the value in the middle: exactly half of the numbers will be ≥ than the median and exactly half will be ≤ the median.
+
+  - *What is median of {3, 7, 2, 99, 5}*?
+
+  - Usually the median is close to the mean, but if there are outliers, they affect the mean more than the median. For that reason, we call the median **robust**.
+  
+- MAD is the **median average deviation**.
+
+  - Take the median of the *differences* between every number in a set and the median of that set.
+  
+  - In order to make it similar to the SD of a normal distribution, multiply by 1.4826. This is what we call the MAD SD (also robust to outliers).
+
+---
+
+# Chopsticks Data Set
+
+Let's run a regression on the chopsticks data set to predict whether participants who liked a song (scale of 1–10) would recommend it to a friend (scale of 1–10). 
+
+  - *How would you describe the data?*
+
+
+```r
+plot(chopsticks$liked, chopsticks$recommend)
+```
+
+&lt;img src="w49_files/figure-html/unnamed-chunk-2-1.png" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+# Chopsticks Data Set (stan_glm)
+
+The `stan_glm()` command runs 2000 simulations for us and reports medians and MAD SD for each parameter. MAD SD in this case is a robust version of SE.
+
+
+```r
+fit &lt;- stan_glm(recommend ~ liked, data = chopsticks)
+```
+
+```
+## 
+## SAMPLING FOR MODEL 'continuous' NOW (CHAIN 1).
+## Chain 1: 
+## Chain 1: Gradient evaluation took 1.8e-05 seconds
+## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.18 seconds.
+## Chain 1: Adjust your expectations accordingly!
+## Chain 1: 
+## Chain 1: 
+## Chain 1: Iteration:    1 / 2000 [  0%]  (Warmup)
+## Chain 1: Iteration:  200 / 2000 [ 10%]  (Warmup)
+## Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
+## Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
+## Chain 1: Iteration:  800 / 2000 [ 40%]  (Warmup)
+## Chain 1: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+## Chain 1: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+## Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+## Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+## Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+## Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+## Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
+## Chain 1: 
+## Chain 1:  Elapsed Time: 0.020684 seconds (Warm-up)
+## Chain 1:                0.023933 seconds (Sampling)
+## Chain 1:                0.044617 seconds (Total)
+## Chain 1: 
+## 
+## SAMPLING FOR MODEL 'continuous' NOW (CHAIN 2).
+## Chain 2: 
+## Chain 2: Gradient evaluation took 3e-06 seconds
+## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.03 seconds.
+## Chain 2: Adjust your expectations accordingly!
+## Chain 2: 
+## Chain 2: 
+## Chain 2: Iteration:    1 / 2000 [  0%]  (Warmup)
+## Chain 2: Iteration:  200 / 2000 [ 10%]  (Warmup)
+## Chain 2: Iteration:  400 / 2000 [ 20%]  (Warmup)
+## Chain 2: Iteration:  600 / 2000 [ 30%]  (Warmup)
+## Chain 2: Iteration:  800 / 2000 [ 40%]  (Warmup)
+## Chain 2: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+## Chain 2: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+## Chain 2: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+## Chain 2: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+## Chain 2: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+## Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+## Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
+## Chain 2: 
+## Chain 2:  Elapsed Time: 0.026007 seconds (Warm-up)
+## Chain 2:                0.024982 seconds (Sampling)
+## Chain 2:                0.050989 seconds (Total)
+## Chain 2: 
+## 
+## SAMPLING FOR MODEL 'continuous' NOW (CHAIN 3).
+## Chain 3: 
+## Chain 3: Gradient evaluation took 5e-06 seconds
+## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.05 seconds.
+## Chain 3: Adjust your expectations accordingly!
+## Chain 3: 
+## Chain 3: 
+## Chain 3: Iteration:    1 / 2000 [  0%]  (Warmup)
+## Chain 3: Iteration:  200 / 2000 [ 10%]  (Warmup)
+## Chain 3: Iteration:  400 / 2000 [ 20%]  (Warmup)
+## Chain 3: Iteration:  600 / 2000 [ 30%]  (Warmup)
+## Chain 3: Iteration:  800 / 2000 [ 40%]  (Warmup)
+## Chain 3: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+## Chain 3: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+## Chain 3: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+## Chain 3: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+## Chain 3: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+## Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+## Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
+## Chain 3: 
+## Chain 3:  Elapsed Time: 0.020717 seconds (Warm-up)
+## Chain 3:                0.02366 seconds (Sampling)
+## Chain 3:                0.044377 seconds (Total)
+## Chain 3: 
+## 
+## SAMPLING FOR MODEL 'continuous' NOW (CHAIN 4).
+## Chain 4: 
+## Chain 4: Gradient evaluation took 4e-06 seconds
+## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.04 seconds.
+## Chain 4: Adjust your expectations accordingly!
+## Chain 4: 
+## Chain 4: 
+## Chain 4: Iteration:    1 / 2000 [  0%]  (Warmup)
+## Chain 4: Iteration:  200 / 2000 [ 10%]  (Warmup)
+## Chain 4: Iteration:  400 / 2000 [ 20%]  (Warmup)
+## Chain 4: Iteration:  600 / 2000 [ 30%]  (Warmup)
+## Chain 4: Iteration:  800 / 2000 [ 40%]  (Warmup)
+## Chain 4: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+## Chain 4: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+## Chain 4: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+## Chain 4: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+## Chain 4: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+## Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+## Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
+## Chain 4: 
+## Chain 4:  Elapsed Time: 0.022526 seconds (Warm-up)
+## Chain 4:                0.023785 seconds (Sampling)
+## Chain 4:                0.046311 seconds (Total)
+## Chain 4:
+```
+
+---
+
+# Chopsticks Data Set (stan_glm)
+
+The `stan_glm()` command runs 2000 simulations for us and reports medians and MAD SD for each parameter. MAD SD in this case is a robust version of SE.
+
+
+```r
+print(fit, 2)
+```
+
+```
+## stan_glm
+##  family:       gaussian [identity]
+##  formula:      recommend ~ liked
+##  observations: 69
+##  predictors:   2
+## ------
+##             Median MAD_SD
+## (Intercept) 3.14   0.50  
+## liked       0.71   0.07  
+## 
+## Auxiliary parameter(s):
+##       Median MAD_SD
+## sigma 1.40   0.12  
+## 
+## ------
+## * For help interpreting the printed output see ?print.stanreg
+## * For info on the priors used see ?prior_summary.stanreg
+```
+
+---
+
+# Chopsticks Data Set (stan_glm)
+
+Let's add a regression line based on the results of our regression.
+
+
+```r
+plot(chopsticks$liked, chopsticks$recommend)
+abline(3.15, 0.71)
+```
+
+&lt;img src="w49_files/figure-html/unnamed-chunk-4-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Confidence Intervals
+
+We can use the MAD SDs to compute **credible intervals**. If the errors are normally or near-normally distributed:
+
+  - Almost all possible parameter values will be within the estimate ± 3 MAD SD.
+
+  - The 99% credible interval is the estimate ± 2½ MAD SD.
+
+  - The 95% credible interval is the estimate ± 2 MAD SD.
+
+  - The 68% credible interval is the estimate ± 1 MAD SD.
+
+  - The 50% credible interval is the estimate ± ⅔ MAD SD.
+
+Unlike traditional confidence intervals, credible intervals mean what you think: there is 99%/95%/68%/50% chance that the correct value falls inside.
+
+---
+
+# Why `stan_glm()`?
+
+- `stan_glm()` uses a Bayesian approach to statistics
+
+- Specifically, it uses **prior information** about the paramters.
+
+- The prior information is very simple: `stan_glm()` just assumes that none of the parameters are likely to be very far from zero.
+
+  - More formally, it assumes that not just the errors but also the parameters themselves have a normal distribution with mean of 0.
+  
+- Classical statistics makes no such assumptions.
+
+- It seems like a trival difference, but the effect on the interpretation of confidence intervals is huge.
+
+- More next week!
+
+---
+
+# Regression to the Mean
+
+&lt;br/&gt;
+
+&lt;br/&gt;
+
+### Why do students who score well on mid-term exams tend to do less well on final exams?
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create();
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
