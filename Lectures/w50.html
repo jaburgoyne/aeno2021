@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Data-analyse · Week 50</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="John Ashley Burgoyne" />
+    <script src="w50_files/header-attrs-2.11/header-attrs.js"></script>
+    <link href="w50_files/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="w50_files/remark-css-0.0.1/default-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Data-analyse · Week 50
+## Now Let’s Do It!
+### John Ashley Burgoyne
+### University of Amsterdam
+
+---
+
+
+
+
+# Statistical Workflow
+
+### 0. Plan your experiment.
+
+### 1. Look at your data.
+
+### 2. Choose a model.
+
+### 3. Fit the model.
+
+### 4. Understand the model fit.
+
+### 5. Identify flaws and questionable assumptions.
+
+---
+
+# Set-Up
+
+In order to follow the examples in the book and this lecture, as well as to do your own linear regression, don't forget to load **rstanarm**, every time you open RStudio.
+
+
+```r
+library(rstanarm)
+```
+
+&lt;br/&gt;
+
+For the examples in this lecture, you will also need to load the **spotify-top-50** data; to follow the review examples from last week, you will also need to load **chopsticks**.
+
+---
+
+# Step 0: Plan Your Experiment
+
+Today, we'll look at an example from the Spotify Top 50, and try to answer the age-old question of whether music in major keys is ‘happy’ and music in minor keeps is ‘sad’. Or more formally,
+
+  - *Does the mode of a piece of pop music affect its emotional valence?*
+
+In this step of the workflow, it is important to think about many of the broader conceptual issues we discussed earlier in the course:
+
+  - **generalisabilty**
+  - **replicability**
+  - **validity**
+  - **reliability**
+
+These concepts can overlap! For example, setting a fixed temperature for beer tasting may have more to do with reliability if you are asking a long questionnaire about one beer but more to do with validity if you are comparing multiple beers.
+
+---
+
+# Step 1: Look at Your Data
+
+We've discussed three standard forms of plots:
+
+  - **histograms** for just one continuous variable (e.g., from simulations)
+  - **scatterplots** for two continuous variables (like chopsticks from last week)
+  - **boxplots** for one continuous and one discrete variable (like today)
+
+How would you describe today's data?
+
+
+```r
+boxplot(spotify_top_50$valence ~ spotify_top_50$mode)
+```
+
+&lt;img src="w50_files/figure-html/unnamed-chunk-2-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Step 2: Choose a Model
+
+We always start with linear regression as a basis:
+
+`$$y = a + bx + \epsilon$$`
+
+&lt;br/&gt;
+
+But we also briefly considered **exponential growth** models
+
+`$$\log y = a + bx + \epsilon$$`
+
+and **power-law** models
+
+`$$\log y = a + b \log x + \epsilon$$`
+
+To use these models we just need to take the logarithm of the data in our dependent variable (exponential) or our dependent variable and our predictor (power-law) before fitting a standard linear regression.
+
+*Do you remember what the regression lines from these models look like?*
+
+---
+
+# Indicator Variables
+
+What do we do if our predictor is discrete? The trick is create an **indicator variable** that equal 1 for one of our groups (usually the treatment group) and 0 for the control or **baseline** group.
+
+  - If there is no strict treatment and control group, we designate a group of our choice as the baseline. 
+
+  - If we have more than two groups, we can use multiple indicator variable: one for every group except the baseline control group. But not in this course!
+  
+Let's create an indicator variable with major keys as the baseline: 
+
+  - major = 0
+  - minor = 1
+
+
+```r
+is_minor &lt;- as.numeric(spotify_top_50$mode == "Minor")
+```
+
+We'll see why this works in a moment!
+
+---
+
+# Step 3: Fit the Model 
+
+We use `stan_glm()` like last week, but with our new indicator variable instead of the raw data.
+
+
+```r
+fit &lt;- stan_glm(spotify_top_50$valence ~ is_minor)
+```
+
+```
+## Warning: Omitting the 'data' argument is not recommended and may not be allowed
+## in future versions of rstanarm. Some post-estimation functions (in particular
+## 'update', 'loo', 'kfold') are not guaranteed to work properly unless 'data' is
+## specified as a data frame.
+```
+
+```
+## 
+## SAMPLING FOR MODEL 'continuous' NOW (CHAIN 1).
+## Chain 1: 
+## Chain 1: Gradient evaluation took 2.5e-05 seconds
+## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.25 seconds.
+## Chain 1: Adjust your expectations accordingly!
+## Chain 1: 
+## Chain 1: 
+## Chain 1: Iteration:    1 / 2000 [  0%]  (Warmup)
+## Chain 1: Iteration:  200 / 2000 [ 10%]  (Warmup)
+## Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
+## Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
+## Chain 1: Iteration:  800 / 2000 [ 40%]  (Warmup)
+## Chain 1: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+## Chain 1: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+## Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+## Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+## Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+## Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+## Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
+## Chain 1: 
+## Chain 1:  Elapsed Time: 0.013645 seconds (Warm-up)
+## Chain 1:                0.015846 seconds (Sampling)
+## Chain 1:                0.029491 seconds (Total)
+## Chain 1: 
+## 
+## SAMPLING FOR MODEL 'continuous' NOW (CHAIN 2).
+## Chain 2: 
+## Chain 2: Gradient evaluation took 5e-06 seconds
+## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.05 seconds.
+## Chain 2: Adjust your expectations accordingly!
+## Chain 2: 
+## Chain 2: 
+## Chain 2: Iteration:    1 / 2000 [  0%]  (Warmup)
+## Chain 2: Iteration:  200 / 2000 [ 10%]  (Warmup)
+## Chain 2: Iteration:  400 / 2000 [ 20%]  (Warmup)
+## Chain 2: Iteration:  600 / 2000 [ 30%]  (Warmup)
+## Chain 2: Iteration:  800 / 2000 [ 40%]  (Warmup)
+## Chain 2: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+## Chain 2: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+## Chain 2: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+## Chain 2: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+## Chain 2: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+## Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+## Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
+## Chain 2: 
+## Chain 2:  Elapsed Time: 0.013758 seconds (Warm-up)
+## Chain 2:                0.016964 seconds (Sampling)
+## Chain 2:                0.030722 seconds (Total)
+## Chain 2: 
+## 
+## SAMPLING FOR MODEL 'continuous' NOW (CHAIN 3).
+## Chain 3: 
+## Chain 3: Gradient evaluation took 6e-06 seconds
+## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.06 seconds.
+## Chain 3: Adjust your expectations accordingly!
+## Chain 3: 
+## Chain 3: 
+## Chain 3: Iteration:    1 / 2000 [  0%]  (Warmup)
+## Chain 3: Iteration:  200 / 2000 [ 10%]  (Warmup)
+## Chain 3: Iteration:  400 / 2000 [ 20%]  (Warmup)
+## Chain 3: Iteration:  600 / 2000 [ 30%]  (Warmup)
+## Chain 3: Iteration:  800 / 2000 [ 40%]  (Warmup)
+## Chain 3: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+## Chain 3: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+## Chain 3: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+## Chain 3: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+## Chain 3: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+## Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+## Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
+## Chain 3: 
+## Chain 3:  Elapsed Time: 0.012581 seconds (Warm-up)
+## Chain 3:                0.016675 seconds (Sampling)
+## Chain 3:                0.029256 seconds (Total)
+## Chain 3: 
+## 
+## SAMPLING FOR MODEL 'continuous' NOW (CHAIN 4).
+## Chain 4: 
+## Chain 4: Gradient evaluation took 5e-06 seconds
+## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.05 seconds.
+## Chain 4: Adjust your expectations accordingly!
+## Chain 4: 
+## Chain 4: 
+## Chain 4: Iteration:    1 / 2000 [  0%]  (Warmup)
+## Chain 4: Iteration:  200 / 2000 [ 10%]  (Warmup)
+## Chain 4: Iteration:  400 / 2000 [ 20%]  (Warmup)
+## Chain 4: Iteration:  600 / 2000 [ 30%]  (Warmup)
+## Chain 4: Iteration:  800 / 2000 [ 40%]  (Warmup)
+## Chain 4: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+## Chain 4: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+## Chain 4: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+## Chain 4: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+## Chain 4: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+## Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+## Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
+## Chain 4: 
+## Chain 4:  Elapsed Time: 0.013437 seconds (Warm-up)
+## Chain 4:                0.01573 seconds (Sampling)
+## Chain 4:                0.029167 seconds (Total)
+## Chain 4:
+```
+
+---
+
+# Step 4: Understand the Model Fit
+
+Let's back up to last week for one moment to think more about how to interpret a linear regression fit.
+
+Remember that we were trying to predict recommendation ratings (1–10) based on liking ratings (1–10) in music from Makiko’s chopsticks experiment.
+
+
+
+
+```
+## stan_glm
+##  family:       gaussian [identity]
+##  formula:      recommend ~ liked
+##  observations: 69
+##  predictors:   2
+## ------
+##             Median MAD_SD
+## (Intercept) 3.16   0.50  
+## liked       0.71   0.07  
+## 
+## Auxiliary parameter(s):
+##       Median MAD_SD
+## sigma 1.40   0.12  
+## 
+## ------
+## * For help interpreting the printed output see ?print.stanreg
+## * For info on the priors used see ?prior_summary.stanreg
+```
+
+---
+
+# Step 4: Understand the Model Fit
+
+In general, the slope parameter tells us how much our prediction for the dependent variable should change for every **unit increase** in the predictor.
+
+  - If the slope is positive, our prediction increases with the predictor: the dependent variable and predictor are **positively correlated**.
+  
+  - If the slope is negative, our prediction *decreases* with the predictor: the dependent variable and predictor are **negatively correlated**.
+
+
+The median slope parameter from `stan_glm()` simulations for our chopsticks research question was (positive) 0.71.
+
+  - That means that for every one-point increase in a participant's like rating for music in the chopsticks experiment (one unit), we should predict that their recommendation rating will be 0.71 points higher.
+  
+  - **Correlation is not causation.** Whether we can say liking music *causes* higher recommendation scores depends on how we set up the experiment.
+
+---
+
+# Indicator Variables Again
+
+Now let's look at the `stan_glm()` results with our indicator variable for the Spotify data.
+
+
+```r
+print(fit, 2)
+```
+
+```
+## stan_glm
+##  family:       gaussian [identity]
+##  formula:      spotify_top_50$valence ~ is_minor
+##  observations: 50
+##  predictors:   2
+## ------
+##             Median MAD_SD
+## (Intercept) 0.57   0.05  
+## is_minor    0.04   0.07  
+## 
+## Auxiliary parameter(s):
+##       Median MAD_SD
+## sigma 0.24   0.02  
+## 
+## ------
+## * For help interpreting the printed output see ?print.stanreg
+## * For info on the priors used see ?prior_summary.stanreg
+```
+
+---
+
+# Indicator Variables Again
+
+The slope parameter for `is_minor` had a  median of 0.04. 
+
+ - That means that for every unit increase in is_minor, we should expect Spotify's valence rating to increase by 0.04.
+ 
+ - *But what is a unit increase in an indicator variable?*
+ 
+   - It is exactly the difference between the two groups.
+   
+   - Thus, the ‘slope’ in a regression with an indicator variable is just the difference in the means of the two groups.
+   
+ - With indicator variables, we can also interpret the intercept.
+ 
+   - The intercpet is the mean value of the dependent variable for the baseline or control group.
+   
+The MAD SD for `is_minor` was 0.07. 
+
+  - *How confident are we that there is a difference in valence between major and minor keys?*
+
+---
+
+# Step 5: Identify Flaws and Questionable Assumptions
+
+After fitting a regression, it is important to consider **outliers**.  Often they are musicologically interesting!
+  
+  - We need to understand why these points are hard to predict: sometimes they are data-entry mistakes.
+  
+  - Sometimes we choose to remove outliers from our data because they have high **influence**. They pull the regression line toward themselves.
+
+&lt;img src="w50_files/figure-html/unnamed-chunk-7-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Outliers with Discrete Predictors
+
+If the predictor is discrete, you can already see outliers on the boxplot. There are no outliers in the valence boxplot from the Spotify data, but we do see one outlier for energy.
+
+
+```r
+boxplot(spotify_top_50$energy ~ spotify_top_50$mode)
+```
+
+&lt;img src="w50_files/figure-html/unnamed-chunk-8-1.png" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+# Classical Statistics
+
+So far, we have only worked with `stan_glm()`, which takes a Bayesian approach to statistics.
+
+  - It uses **prior information** that we don't expect huge parameter values.
+
+Classical linear regression makes no such assumption.
+
+  - Classical regression only minimised the **residual sum of squares (RSS)**, also known as **sum of squared error (SSE)**. 
+
+  - In classical terminology, errors in the model are called **residuals** once we have fit the model to actual data.
+  
+  - Classical linear regression is also called **ordinary least squares (OLS)** because all it does is minimise the total of all of the residuals *squared*.
+  
+We can fit a classical regression in R using `lm()` instead of `stan_glm()`. 
+
+  - Despite the theoretical differences, the results are usually very similar.
+
+---
+
+# Classical Regression
+
+
+```r
+fit &lt;- lm(spotify_top_50$valence ~ is_minor)
+summary(fit)
+```
+
+```
+## 
+## Call:
+## lm(formula = spotify_top_50$valence ~ is_minor)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.45625 -0.12950 -0.01819  0.17978  0.37675 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  0.56525    0.04484  12.606   &lt;2e-16 ***
+## is_minor     0.04389    0.06760   0.649    0.519    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.2373 on 48 degrees of freedom
+## Multiple R-squared:  0.008704,	Adjusted R-squared:  -0.01195 
+## F-statistic: 0.4215 on 1 and 48 DF,  p-value: 0.5193
+```
+
+
+---
+
+# Classical Regression
+
+A classical statistician would call this a ** *t* test ** and report it like this:
+
+  - The effect of minor key on valence was 0.05, *t*(48) = 0.65, *p* = .52.
+  
+  - Because the *p* value is greater than .05, it would not be considered **statistically significant**.
+
+### But beware! 
+
+  - The *p* value only has to do with a null hypothesis that the difference is *exactly* zero – and we probably never thought that was true.
+  
+  - Confidence intervals based on classical SE estimates do *not* necessarily mean that there is a 95% chance that the true parameter is inside the confidence interval.
+  
+  - Controlling for statistical significance actually *increases* the chance of Type M and Type S errors.
+
+---
+
+# But Is My Fit Good?
+
+Many researchers like to compute a statistic known as `\(R^2\)` to evaluate the quality of their regression models.
+
+  - Formally, `\(R^2\)` is the proportion of variance in the dependent variable that the regression model can predict. The higher, the better; 1.0 is perfect.
+  
+  - We use the `sigma` estimate from `stan_glm()` as well as the standard deviation of the observed data for the dependent variable.
+  
+  - The formula is
+    `$$R^2 = 1 - \frac{\sigma^2}{\left[\text{SD}(y)\right]^2}$$`
+    
+In the social sciences, an `\(R^2\)` of just 0.01 is sufficient for a publishable result.
+
+  - `\(R^2\)` between 0.01 and 0.10 is seen as a small effect.
+  - `\(R^2\)` between 0.10 and 0.25 is seen as a medium-sized effect.
+  - `\(R^2\)` greater than 0.25 is seen as a large effect.
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create();
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
